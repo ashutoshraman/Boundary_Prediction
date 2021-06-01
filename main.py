@@ -5,7 +5,7 @@ import scipy
 
 class NNlib():
     def __init__(self):
-        self.files = 'folder_name_here'
+        self.filepath = '5-26-21_TumorID_Data'
 
     def read_files(self):
-        pass
+        folderinfor1 = glob(self.filepath + "*.csv")
