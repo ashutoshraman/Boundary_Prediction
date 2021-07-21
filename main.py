@@ -10,6 +10,7 @@ class NNlib():
         self.directory = '5-26-21_TumorID_Data/'
         self.blue_spectra = np.genfromtxt(self.directory + 'blue.csv.csv', delimiter=',')
         self.red_spectra = np.genfromtxt(self.directory + 'red.csv.csv', delimiter=',')
+        self.step_size = .01
         self.filepath = [self.directory + 'simstudy' + str(i) + '.csv.csv' for i in range(360)]
         
 
@@ -49,11 +50,9 @@ class NNlib():
             average_data = np.average(filter_data) #instead of averaging try difference of spectra (like in TumorID), try normalizing first
             output_array = np.append(output_array, average_data)
 
-        step_size = .01
-
         # d_output_array = np.diff(output_array)/step_size
         plt.figure()
-        plt.scatter(np.arange(0, np.max(output_array.shape)/100, step_size), output_array, label='averaged and filtered data')
+        plt.scatter(np.arange(0, np.max(output_array.shape)/100, self.step_size), output_array, label='averaged and filtered data')
         # plt.scatter(np.arange(0, np.max(d_output_array.shape)/100, step_size), d_output_array, label='first derivative')
         plt.xlabel('Position (mm)')
         plt.ylabel('Intensity')
@@ -74,8 +73,8 @@ class NNlib():
             red_RMS_matrix = np.append(red_RMS_matrix, RMS_red)
             blue_RMS_matrix = np.append(blue_RMS_matrix, RMS_blue)
         plt.figure()
-        plt.scatter(np.arange(0, np.max(blue_RMS_matrix.shape)/100, .01), blue_RMS_matrix, label='Blue RMS')
-        plt.scatter(np.arange(0, np.max(red_RMS_matrix.shape)/100, .01), red_RMS_matrix, label='Red RMS')
+        plt.scatter(np.arange(0, np.max(blue_RMS_matrix.shape)/100, self.step_size), blue_RMS_matrix, label='Blue RMS')
+        plt.scatter(np.arange(0, np.max(red_RMS_matrix.shape)/100, self.step_size), red_RMS_matrix, label='Red RMS')
         plt.xlabel('Position (mm)')
         plt.ylabel('RMS Error')
         plt.title('RMS Error for Position Spectra When Compared with Baseline Blue and Red Spectra')
@@ -97,15 +96,19 @@ class NNlib():
                 RMS_blue = 0
             RMS_matrix_red = np.append(RMS_matrix_red, RMS_red)
             RMS_matrix_blue = np.append(RMS_matrix_blue, RMS_blue)
+        boundary_bounds = [np.argmax(RMS_matrix_blue), np.argmax(RMS_matrix_red)]
+
         plt.figure()
-        plt.scatter(np.arange(0, np.max(RMS_matrix_blue.shape)/100, .01), RMS_matrix_blue)
-        plt.scatter(np.arange(0, np.max(RMS_matrix_red.shape)/100, .01), RMS_matrix_red)
+        plt.scatter(np.arange(0, np.max(RMS_matrix_blue.shape)/100, self.step_size), RMS_matrix_blue)
+        plt.scatter(np.arange(0, np.max(RMS_matrix_red.shape)/100, self.step_size), RMS_matrix_red)
         plt.xlabel('Position (mm)')
         plt.ylabel('RMS Error')
         plt.title('RMS Error for Position Spectra When Compared with Baseline Blue and Red Spectra and Lower Error Taken')
         plt.show()
         # rms error compare to all reference spectra and choose one with lowest error and change marker color to that reference color, and plot rms error for trust in prediction
-    
+        return np.arange(0, np.max(RMS_matrix_blue.shape)/100, self.step_size)[boundary_bounds]
+
+
     def plot_comparison_to_largest_wvlngth_intensity_diff(self):
         difference_in_spectra = self.blue_spectra[:, 1] - self.red_spectra[:, 1]
         min_intensity_index = np.argmin(difference_in_spectra)
@@ -132,8 +135,8 @@ class NNlib():
         max_spectral_ratio = max_spectral_ratio - max_spectral_ratio[0]
         min_spectral_ratio = min_spectral_ratio - min_spectral_ratio[0]        
         
-        plt.plot(np.arange(0, np.max(max_spectral_ratio.shape)/100, .01), max_spectral_ratio, label='500nm/(Max B-R Intensity Difference Wavelength)')
-        plt.plot(np.arange(0, np.max(min_spectral_ratio.shape)/100, .01), min_spectral_ratio, label='500nm/(Min B-R Intensity Difference Wavelength)')
+        plt.plot(np.arange(0, np.max(max_spectral_ratio.shape)/100, self.step_size), max_spectral_ratio, label='500nm/(Max B-R Intensity Difference Wavelength)')
+        plt.plot(np.arange(0, np.max(min_spectral_ratio.shape)/100, self.step_size), min_spectral_ratio, label='500nm/(Min B-R Intensity Difference Wavelength)')
 
         plt.legend(loc='upper right')
         plt.xlabel('Position (mm)')
@@ -149,6 +152,10 @@ class NNlib():
         plt.show()
         # subtract red from blue spectra like in Sim, compare biggest differences, do plot of ratio of wvlngth to 500nm on x position spectra, biggest diff is red, smooth and predict with differentiation of curve
 
+        dydx = np.diff(max_spectral_ratio)/ self.step_size
+        plt.figure()
+        plt.plot(np.arange(0, np.max(max_spectral_ratio.shape)/100, self.step_size), np.append(max_spectral_ratio[0], dydx))
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -157,9 +164,9 @@ if __name__ == "__main__":
     # print(sizes)
     instance = NNlib()
     # instance.read_files_averaged_and_filtered()
-    instance.plot_comparison_to_largest_wvlngth_intensity_diff()
-    instance.rms_plot_compare_to_red_blue_spectra()
-    instance.rms_plot_change_marker_color_multiclass_classification()
+    # instance.plot_comparison_to_largest_wvlngth_intensity_diff()
+    # instance.rms_plot_compare_to_red_blue_spectra()
+    print(instance.rms_plot_change_marker_color_multiclass_classification())
     
     # instance.plot_spectra('simstudy300.csv.csv')
     # print(instance.normalize_spectra('simstudy300.csv.csv'))
