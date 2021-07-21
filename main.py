@@ -23,12 +23,12 @@ class NNlib():
 
     def normalize_spectra(self, in_spectra): # compare to wvlngth=500nm
         # in_spectra = np.genfromtxt(self.directory + str(in_spectra), delimiter=',')
-        wavelength_500 = np.argmin(np.abs(self.blue_spectra[:, 0] - 500)) # use index and divide intensity at index by spectra
+        wavelength_500 = np.argmin(np.abs(in_spectra[:, 0] - 500)) # use index and divide intensity at index by spectra
         normalized_data = in_spectra[:, 1] / in_spectra[wavelength_500, 1]
-        normalized_data = normalized_data.reshape((normalized_data.shape[0]), 1)
-        normalized_data = np.append(np.zeros(normalized_data.shape), normalized_data, axis=1)
+        normalized_data = normalized_data.reshape(normalized_data.shape[0], 1)
+        normalized_data = np.append(in_spectra[:, 0].reshape(in_spectra.shape[0], 1), normalized_data, axis=1)
         # plt.figure()
-        # plt.plot(in_spectra[:, 0], normalized_data) # makes spectra even less normal since wv_500 is sub 1 intensity
+        # plt.plot(normalized_data[:, 0], normalized_data[:, 1]) # makes spectra even less normal since wv_500 is sub 1 intensity
         # plt.show()
         return normalized_data
 
@@ -45,7 +45,7 @@ class NNlib():
         output_array = np.asarray(output_array)
         for file in self.filepath:
             data = np.genfromtxt(str(file), delimiter=',')
-            # data = self.normalize_spectra(data)
+            data = self.normalize_spectra(data)
             filter_data = data[(data[:,0]>670) & (data[:,0]<700)][:, 1]
             average_data = np.average(filter_data) #instead of averaging try difference of spectra (like in TumorID), try normalizing first
             output_array = np.append(output_array, average_data)
@@ -65,11 +65,13 @@ class NNlib():
     def rms_plot_compare_to_red_blue_spectra(self): # rms error from red spectra plotted
         red_RMS_matrix = np.asarray([])
         blue_RMS_matrix = np.asarray([])
+        normalized_blue = self.normalize_spectra(self.blue_spectra)
+        normalized_red = self.normalize_spectra(self.red_spectra)
         for file in self.filepath:
             file = np.genfromtxt(str(file), delimiter=',')
-            # file = self.normalize_spectra(file)
-            RMS_red = np.sqrt((np.sum(np.square(self.red_spectra[:, 1] - file[:, 1]))) / self.red_spectra.shape[0])
-            RMS_blue = np.sqrt((np.sum(np.square(self.blue_spectra[:, 1] - file[:, 1]))) / self.blue_spectra.shape[0])
+            file = self.normalize_spectra(file)
+            RMS_red = np.sqrt((np.sum(np.square(normalized_red[:, 1] - file[:, 1]))) / normalized_red.shape[0])
+            RMS_blue = np.sqrt((np.sum(np.square(normalized_blue[:, 1] - file[:, 1]))) / normalized_blue.shape[0])
             red_RMS_matrix = np.append(red_RMS_matrix, RMS_red)
             blue_RMS_matrix = np.append(blue_RMS_matrix, RMS_blue)
         plt.figure()
@@ -84,11 +86,13 @@ class NNlib():
     def rms_plot_change_marker_color_multiclass_classification(self):
         RMS_matrix_blue = np.asarray([])
         RMS_matrix_red = np.copy(RMS_matrix_blue)
+        normalized_blue = self.normalize_spectra(self.blue_spectra) # perhaps don't normalize since this looks bad and predicts badly
+        normalized_red = self.normalize_spectra(self.red_spectra)
         for file in self.filepath:
             file = np.genfromtxt(str(file), delimiter=',')
-            # file = self.normalize_spectra(file)
-            RMS_red = np.sqrt((np.sum(np.square(self.red_spectra[:, 1] - file[:, 1]))) / self.red_spectra.shape[0])
-            RMS_blue = np.sqrt((np.sum(np.square(self.blue_spectra[:, 1] - file[:, 1]))) / self.blue_spectra.shape[0])
+            file = self.normalize_spectra(file)
+            RMS_red = np.sqrt((np.sum(np.square(normalized_red[:, 1] - file[:, 1]))) / normalized_red.shape[0])
+            RMS_blue = np.sqrt((np.sum(np.square(normalized_blue[:, 1] - file[:, 1]))) / normalized_blue.shape[0])
             # RMS_choice = min(RMS_red, RMS_blue)
             if RMS_red > RMS_blue:
                 RMS_red = 0
@@ -110,7 +114,9 @@ class NNlib():
 
 
     def plot_comparison_to_largest_wvlngth_intensity_diff(self):
-        difference_in_spectra = self.blue_spectra[:, 1] - self.red_spectra[:, 1]
+        normalized_blue = self.normalize_spectra(self.blue_spectra)
+        normalized_red = self.normalize_spectra(self.red_spectra)
+        difference_in_spectra = normalized_blue[:, 1] - normalized_red[:, 1]
         min_intensity_index = np.argmin(difference_in_spectra)
         max_intensity_index = np.argmax(difference_in_spectra)
         wavelength_500_index = np.argmin(np.abs(self.blue_spectra[:, 0] - 500))
@@ -120,7 +126,7 @@ class NNlib():
         
         for file in self.filepath:
             file = np.genfromtxt(str(file), delimiter=',')
-            # file = self.normalize_spectra(file)
+            file = self.normalize_spectra(file)
 
             intensity_max = file[max_intensity_index, 1]
             intensity_min = file[min_intensity_index, 1]
@@ -160,13 +166,12 @@ class NNlib():
 
 if __name__ == "__main__":
     # NNlib().plot_spectra('red.csv.csv')
-    # sizes = NNlib().plot_comparison_to_largest_wvlngth_intensity_diff('simstudy344.csv.csv')
-    # print(sizes)
+    
     instance = NNlib()
-    # instance.read_files_averaged_and_filtered()
+    instance.read_files_averaged_and_filtered()
     # instance.plot_comparison_to_largest_wvlngth_intensity_diff()
     # instance.rms_plot_compare_to_red_blue_spectra()
-    print(instance.rms_plot_change_marker_color_multiclass_classification())
+    # print(instance.rms_plot_change_marker_color_multiclass_classification())
     
     # instance.plot_spectra('simstudy300.csv.csv')
     # print(instance.normalize_spectra('simstudy300.csv.csv'))
