@@ -4,6 +4,8 @@ from glob import glob
 from numpy.core.fromnumeric import shape
 from numpy.lib.function_base import diff
 import scipy
+import pandas as pd
+import h5py
 
 class NNlib():
     def __init__(self):
