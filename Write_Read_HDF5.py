@@ -4,7 +4,10 @@ import glob
 import h5py
 import os
 import matplotlib.pyplot as plt
+import time
 from NNlib import NNlib
+
+
 def pandas_read_write():
     pass
     instance = NNlib()
@@ -126,7 +129,10 @@ class H5_Class(NNlib):
         f.close()
 
     def read_raster_contents(self, hdf_name):
+        t1 = time.time()
         f = h5py.File(hdf_name, 'r')
+        t2 = time.time()
+        print(t2-t1)
         def printname(name):
             print(name)
         print(f.visit(printname))
