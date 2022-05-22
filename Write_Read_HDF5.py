@@ -104,9 +104,9 @@ def guangshen_method():
 class H5_Class(NNlib):
     def __init__(self):
         super(H5_Class, self).__init__()
-        # self.directory = 'B2R_150mA_hundredth_step_3mm/'
-        # self.step_size = .01
-        # self.filepath = [self.directory + str(i) + 'spectralsig' + '.csv' for i in range(300)]
+        self.directory = 'B2R_150mA_hundredth_step_3mm/'
+        self.step_size = .01
+        self.filepath = [self.directory + str(i) + 'spectralsig' + '.csv' for i in range(300)]
 
     def store_many_rasters(self, hdf_name):
         if os.path.exists(hdf_name):
